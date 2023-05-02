@@ -16,15 +16,23 @@ html = request.text
 
 soup = BeautifulSoup(html, 'html5lib')
 
-cards = soup.select('div.direction-card.ui-col-md-6.ui-col-xxxl-6')
+cards = soup.select('a.card_full_link')
 
 courses = []
 for card in cards:
-    information = {
-        'name': card.select('div.direction-card__title')[0].text,
-        'skills': card.select('div.direction-card__tags')[0].getText(separator=u',')
-    }
-    courses.append(information)
+    try:
+        request = session.get(card.get('href'), timeout=3)
+        html = request.text
+        soup = BeautifulSoup(html, 'html.parser')
+
+        print(soup.select('h1.gkb-promo__title.ui-text-heading--2.ui-text--bold')[0].text)
+        print(soup.select('div.gkb-promo__tag-wrapper.promo-tech__wrapper')[0].text)
+        courses.append({
+            'name': soup.select('h1.gkb-promo__title.ui-text-heading--2.ui-text--bold')[0].text,
+            'skills': soup.select('div.gkb-promo__tag-wrapper.promo-tech__wrapper')[0].text
+        })
+    except Exception as ex:
+        print(ex)
 
 courses = pd.DataFrame.from_dict(courses)
 courses.to_csv('geekbrains_courses.csv', index=False)
